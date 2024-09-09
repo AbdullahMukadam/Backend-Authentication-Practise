@@ -1,5 +1,6 @@
 import User from "../Models/UserModel.js"
 import bcrypt from "bcryptjs"
+import createToken from "../utils/CreateToken.js";
 
 const RegisterUser = async (req, res) => {
    const { username, email, password } = req.body;
@@ -19,13 +20,22 @@ const RegisterUser = async (req, res) => {
       password: hashedPass
    })
    try {
-      NewUser.save();
+     await NewUser.save();
 
-      return res.json({
-         username:NewUser.username,
-         email: NewUser.email,
-         _id : NewUser._id
-      })
+     const token = createToken(NewUser._id);
+
+     res.cookie("jwt", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+    });
+
+    res.status(201).json({
+      message: "Registration successful",
+      username: NewUser.username,
+      email: NewUser.email,
+      _id: NewUser._id,
+    });
+    
    } catch (error) {
       console.log(error)
    }
